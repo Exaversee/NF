@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nouf - Purple Magic</title>
+    <!-- استدعاء خط عربي فخم وعريض من جوجل -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            /* لون خلفية داكن جداً مائل للبنفسجي الغامق عشان يبرز اللون الموف */
+            background-color: #05000a; 
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Courier New', Courier, monospace; 
+        }
+        #name-container {
+            position: absolute;
+            width: 100vw;
+            height: 100vh;
+            top: 0;
+            left: 0;
+        }
+        .love-word {
+            position: absolute;
+            font-weight: bold;
+            opacity: 0;
+            white-space: nowrap;
+            /* إضافة حركتين: الظهور، ثم الطفو المستمر */
+            animation: fadeIn 0.8s forwards, float 3s ease-in-out infinite alternate;
+            transform: translate(-50%, -50%);
+            /* توهج موف حوالين الكلمات */
+            text-shadow: 0 0 8px rgba(180, 50, 255, 0.7); 
+        }
+        
+        /* حركة الظهور مع تكبير خفيف */
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+            100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        
+        /* حركة الطفو (يتحرك فوق وتحت بشكل ناعم) */
+        @keyframes float {
+            0% { margin-top: 0px; }
+            100% { margin-top: -6px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="name-container"></div>
+
+    <script>
+        const phrases = [
+            "I love you", "Te amo", "Je t'aime", "Ich liebe dich", 
+            "Seni seviyorum", "Ti amo", "Я тебя люблю", "愛してる", 
+            "사랑해", "Aku cinta kamu", "Mahal kita", "أنا أحبك"
+        ];
+        
+        const container = document.getElementById('name-container');
+        let points = [];
+
+        function setupPoints() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            ctx.fillStyle = "white";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            
+            // استخدام الخط العريض اللي استدعيناه
+            let fontSize = Math.min(window.innerWidth * 0.35, window.innerHeight * 0.55);
+            ctx.font = `900 ${fontSize}px 'Cairo', 'Arial Black', sans-serif`;
+
+            ctx.fillText("نوف", canvas.width / 2, canvas.height / 2);
+
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+            // مسافة أقصر (5 بدل 6) عشان نجمع نقاط أكثر ويصير الاسم واضح ومليان
+            for (let y = 0; y < canvas.height; y += 5) {
+                for (let x = 0; x < canvas.width; x += 5) {
+                    const alpha = imgData[(y * canvas.width + x) * 4 + 3];
+                    if (alpha > 128) {
+                        points.push({x, y});
+                    }
+                }
+            }
+        }
+
+        function drawName() {
+            if (points.length === 0) return;
+
+            // نرسم 4 كلمات مع بعض للسرعة
+            for(let i = 0; i < 4; i++) {
+                if(container.childNodes.length >= 2200) return; // زيادة الحد الأقصى للكلمات
+
+                const randIndex = Math.floor(Math.random() * points.length);
+                const point = points[randIndex];
+
+                // تناثر خفيف للكلمات حوالين النقاط
+                const jitterX = (Math.random() - 0.5) * 12;
+                const jitterY = (Math.random() - 0.5) * 12;
+
+                const word = document.createElement('span');
+                word.className = 'love-word';
+                word.innerText = phrases[Math.floor(Math.random() * phrases.length)];
+
+                // حجم خط الكلمات
+                const fontSize = Math.random() * 10 + 6; 
+                word.style.fontSize = `${fontSize}px`;
+
+                // **توليد درجات الموف (البنفسجي)**
+                // Hue 260-290 يغطي درجات الموف والبنفسجي
+                const hue = Math.floor(Math.random() * 30) + 260;
+                const saturation = Math.floor(Math.random() * 20) + 80; // ألوان مشبعة
+                const lightness = Math.floor(Math.random() * 25) + 60; // ألوان فاتحة
+                
+                word.style.color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+
+                // تأخير عشوائي لحركة الطفو عشان كل كلمة تتحرك برتم مختلف
+                word.style.animationDelay = `0s, ${Math.random() * 2}s`;
+
+                word.style.left = `${point.x + jitterX}px`;
+                word.style.top = `${point.y + jitterY}px`;
+
+                container.appendChild(word);
+            }
+
+            if (container.childNodes.length < 2200) {
+                setTimeout(drawName, 10); // السرعة
+            }
+        }
+
+        // نتأكد إن الخط الجميل تحمّل أول، بعدين نبدأ نرسم
+        document.fonts.ready.then(() => {
+            setupPoints();
+            drawName();
+        });
+
+        window.addEventListener('resize', () => {
+            container.innerHTML = '';
+            points = [];
+            setupPoints();
+            drawName();
+        });
+    </script>
+</body>
+</html>
