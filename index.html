@@ -2,7 +2,6 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <!-- منع التكبير عشان يعطي تجربة مثل التطبيقات -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Nouf - Purple Magic</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@900&display=swap" rel="stylesheet">
@@ -14,9 +13,9 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            /* استخدام dvh بدل vh لحل مشكلة شريط المتصفح في الجوال */
+            height: 100dvh;
             font-family: 'Courier New', Courier, monospace; 
-            /* منع تحديد النصوص في الجوال */
             user-select: none;
             -webkit-user-select: none;
             touch-action: none; 
@@ -24,7 +23,7 @@
         #name-container {
             position: absolute;
             width: 100vw;
-            height: 100vh;
+            height: 100dvh;
             top: 0;
             left: 0;
         }
@@ -35,7 +34,7 @@
             white-space: nowrap;
             animation: fadeIn 0.8s forwards, float 3s ease-in-out infinite alternate;
             transform: translate(-50%, -50%);
-            text-shadow: 0 0 8px rgba(180, 50, 255, 0.7); 
+            text-shadow: 0 0 6px rgba(180, 50, 255, 0.8); 
         }
         
         @keyframes fadeIn {
@@ -45,7 +44,7 @@
         
         @keyframes float {
             0% { margin-top: 0px; }
-            100% { margin-top: -6px; }
+            100% { margin-top: -5px; }
         }
     </style>
 </head>
@@ -61,7 +60,7 @@
         
         const container = document.getElementById('name-container');
         let points = [];
-        let isMobile = window.innerWidth <= 768; // التعرف على الجوال
+        let isMobile = window.innerWidth <= 768;
 
         function setupPoints() {
             const canvas = document.createElement('canvas');
@@ -74,19 +73,26 @@
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             
-            // تحديث حالة الشاشة
             isMobile = window.innerWidth <= 768;
             
-            // إذا كانت الشاشة جوال، نكبر نسبة الخط للعرض عشان يعبي الشاشة
-            let fontSize = isMobile ? window.innerWidth * 0.55 : Math.min(window.innerWidth * 0.35, window.innerHeight * 0.55);
+            // حسبة دقيقة لحجم الخط عشان ما ينقص في الجوال ولا يطلع بره الشاشة
+            let fontSize;
+            if (isMobile) {
+                fontSize = window.innerWidth * 0.45; // مناسب لعرض الجوال
+            } else {
+                fontSize = Math.min(window.innerWidth * 0.35, window.innerHeight * 0.55);
+            }
+
             ctx.font = `900 ${fontSize}px 'Cairo', 'Arial Black', sans-serif`;
 
-            ctx.fillText("نوف", canvas.width / 2, canvas.height / 2);
+            // رفع الاسم شوي بالجوال عشان يتوسط صح
+            let offsetY = isMobile ? (canvas.height / 2) - (fontSize * 0.1) : canvas.height / 2;
+            ctx.fillText("نوف", canvas.width / 2, offsetY);
 
             const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
 
-            // في الجوال ناخذ مسافة أكبر شوي بين النقاط لتخفيف الحمل على المتصفح
-            let step = isMobile ? 6 : 5;
+            // تقليل الخطوة بالجوال عشان يعطي تفاصيل أكثر للاسم وتوضح النقاط
+            let step = isMobile ? 4 : 5;
 
             for (let y = 0; y < canvas.height; y += step) {
                 for (let x = 0; x < canvas.width; x += step) {
@@ -101,9 +107,9 @@
         function drawName() {
             if (points.length === 0) return;
 
-            // الحد الأقصى للكلمات يتغير بناءً على نوع الشاشة للحفاظ على سلاسة الجوال
-            let maxWords = isMobile ? 1200 : 2200;
-            let wordsPerTick = isMobile ? 3 : 4;
+            // عدد الكلمات المناسب لسرعة الجوال وشكل الاسم
+            let maxWords = isMobile ? 1000 : 2000;
+            let wordsPerTick = isMobile ? 2 : 4;
 
             for(let i = 0; i < wordsPerTick; i++) {
                 if(container.childNodes.length >= maxWords) return; 
@@ -111,16 +117,16 @@
                 const randIndex = Math.floor(Math.random() * points.length);
                 const point = points[randIndex];
 
-                // تقليل التناثر (Jitter) في الجوال عشان ما تخرب حواف الاسم
-                const jitterX = (Math.random() - 0.5) * (isMobile ? 8 : 12);
-                const jitterY = (Math.random() - 0.5) * (isMobile ? 8 : 12);
+                // مساحة التناثر أصغر في الجوال عشان ما تتشوه الحروف
+                const jitterX = (Math.random() - 0.5) * (isMobile ? 6 : 10);
+                const jitterY = (Math.random() - 0.5) * (isMobile ? 6 : 10);
 
                 const word = document.createElement('span');
                 word.className = 'love-word';
                 word.innerText = phrases[Math.floor(Math.random() * phrases.length)];
 
-                // تصغير حجم الخط شوي بالجوال عشان ما تتداخل وتصير زحمة
-                const fontSize = Math.random() * (isMobile ? 7 : 10) + (isMobile ? 5 : 6); 
+                // تصغير الخط بالجوال عشان تبان ملامح الاسم 
+                const fontSize = Math.random() * (isMobile ? 6 : 10) + (isMobile ? 4 : 6); 
                 word.style.fontSize = `${fontSize}px`;
 
                 const hue = Math.floor(Math.random() * 30) + 260;
@@ -141,9 +147,12 @@
             }
         }
 
+        // تأخير بسيط عشان نضمن تحميل الخط بالجوال 100%
         document.fonts.ready.then(() => {
-            setupPoints();
-            drawName();
+            setTimeout(() => {
+                setupPoints();
+                drawName();
+            }, 200);
         });
 
         window.addEventListener('resize', () => {
