@@ -2,13 +2,12 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- منع التكبير عشان يعطي تجربة مثل التطبيقات -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Nouf - Purple Magic</title>
-    <!-- استدعاء خط عربي فخم وعريض من جوجل -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@900&display=swap" rel="stylesheet">
     <style>
         body {
-            /* لون خلفية داكن جداً مائل للبنفسجي الغامق عشان يبرز اللون الموف */
             background-color: #05000a; 
             margin: 0;
             overflow: hidden;
@@ -17,6 +16,10 @@
             align-items: center;
             height: 100vh;
             font-family: 'Courier New', Courier, monospace; 
+            /* منع تحديد النصوص في الجوال */
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none; 
         }
         #name-container {
             position: absolute;
@@ -30,20 +33,16 @@
             font-weight: bold;
             opacity: 0;
             white-space: nowrap;
-            /* إضافة حركتين: الظهور، ثم الطفو المستمر */
             animation: fadeIn 0.8s forwards, float 3s ease-in-out infinite alternate;
             transform: translate(-50%, -50%);
-            /* توهج موف حوالين الكلمات */
             text-shadow: 0 0 8px rgba(180, 50, 255, 0.7); 
         }
         
-        /* حركة الظهور مع تكبير خفيف */
         @keyframes fadeIn {
             0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
             100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
         }
         
-        /* حركة الطفو (يتحرك فوق وتحت بشكل ناعم) */
         @keyframes float {
             0% { margin-top: 0px; }
             100% { margin-top: -6px; }
@@ -62,6 +61,7 @@
         
         const container = document.getElementById('name-container');
         let points = [];
+        let isMobile = window.innerWidth <= 768; // التعرف على الجوال
 
         function setupPoints() {
             const canvas = document.createElement('canvas');
@@ -74,17 +74,22 @@
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             
-            // استخدام الخط العريض اللي استدعيناه
-            let fontSize = Math.min(window.innerWidth * 0.35, window.innerHeight * 0.55);
+            // تحديث حالة الشاشة
+            isMobile = window.innerWidth <= 768;
+            
+            // إذا كانت الشاشة جوال، نكبر نسبة الخط للعرض عشان يعبي الشاشة
+            let fontSize = isMobile ? window.innerWidth * 0.55 : Math.min(window.innerWidth * 0.35, window.innerHeight * 0.55);
             ctx.font = `900 ${fontSize}px 'Cairo', 'Arial Black', sans-serif`;
 
             ctx.fillText("نوف", canvas.width / 2, canvas.height / 2);
 
             const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
 
-            // مسافة أقصر (5 بدل 6) عشان نجمع نقاط أكثر ويصير الاسم واضح ومليان
-            for (let y = 0; y < canvas.height; y += 5) {
-                for (let x = 0; x < canvas.width; x += 5) {
+            // في الجوال ناخذ مسافة أكبر شوي بين النقاط لتخفيف الحمل على المتصفح
+            let step = isMobile ? 6 : 5;
+
+            for (let y = 0; y < canvas.height; y += step) {
+                for (let x = 0; x < canvas.width; x += step) {
                     const alpha = imgData[(y * canvas.width + x) * 4 + 3];
                     if (alpha > 128) {
                         points.push({x, y});
@@ -96,34 +101,33 @@
         function drawName() {
             if (points.length === 0) return;
 
-            // نرسم 4 كلمات مع بعض للسرعة
-            for(let i = 0; i < 4; i++) {
-                if(container.childNodes.length >= 2200) return; // زيادة الحد الأقصى للكلمات
+            // الحد الأقصى للكلمات يتغير بناءً على نوع الشاشة للحفاظ على سلاسة الجوال
+            let maxWords = isMobile ? 1200 : 2200;
+            let wordsPerTick = isMobile ? 3 : 4;
+
+            for(let i = 0; i < wordsPerTick; i++) {
+                if(container.childNodes.length >= maxWords) return; 
 
                 const randIndex = Math.floor(Math.random() * points.length);
                 const point = points[randIndex];
 
-                // تناثر خفيف للكلمات حوالين النقاط
-                const jitterX = (Math.random() - 0.5) * 12;
-                const jitterY = (Math.random() - 0.5) * 12;
+                // تقليل التناثر (Jitter) في الجوال عشان ما تخرب حواف الاسم
+                const jitterX = (Math.random() - 0.5) * (isMobile ? 8 : 12);
+                const jitterY = (Math.random() - 0.5) * (isMobile ? 8 : 12);
 
                 const word = document.createElement('span');
                 word.className = 'love-word';
                 word.innerText = phrases[Math.floor(Math.random() * phrases.length)];
 
-                // حجم خط الكلمات
-                const fontSize = Math.random() * 10 + 6; 
+                // تصغير حجم الخط شوي بالجوال عشان ما تتداخل وتصير زحمة
+                const fontSize = Math.random() * (isMobile ? 7 : 10) + (isMobile ? 5 : 6); 
                 word.style.fontSize = `${fontSize}px`;
 
-                // **توليد درجات الموف (البنفسجي)**
-                // Hue 260-290 يغطي درجات الموف والبنفسجي
                 const hue = Math.floor(Math.random() * 30) + 260;
-                const saturation = Math.floor(Math.random() * 20) + 80; // ألوان مشبعة
-                const lightness = Math.floor(Math.random() * 25) + 60; // ألوان فاتحة
+                const saturation = Math.floor(Math.random() * 20) + 80; 
+                const lightness = Math.floor(Math.random() * 25) + 60; 
                 
                 word.style.color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-
-                // تأخير عشوائي لحركة الطفو عشان كل كلمة تتحرك برتم مختلف
                 word.style.animationDelay = `0s, ${Math.random() * 2}s`;
 
                 word.style.left = `${point.x + jitterX}px`;
@@ -132,12 +136,11 @@
                 container.appendChild(word);
             }
 
-            if (container.childNodes.length < 2200) {
-                setTimeout(drawName, 10); // السرعة
+            if (container.childNodes.length < maxWords) {
+                setTimeout(drawName, isMobile ? 15 : 10); 
             }
         }
 
-        // نتأكد إن الخط الجميل تحمّل أول، بعدين نبدأ نرسم
         document.fonts.ready.then(() => {
             setupPoints();
             drawName();
