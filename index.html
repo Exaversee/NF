@@ -13,8 +13,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            /* استخدام dvh بدل vh لحل مشكلة شريط المتصفح في الجوال */
-            height: 100dvh;
+            height: 100vh;
             font-family: 'Courier New', Courier, monospace; 
             user-select: none;
             -webkit-user-select: none;
@@ -23,7 +22,7 @@
         #name-container {
             position: absolute;
             width: 100vw;
-            height: 100dvh;
+            height: 100vh;
             top: 0;
             left: 0;
         }
@@ -34,7 +33,7 @@
             white-space: nowrap;
             animation: fadeIn 0.8s forwards, float 3s ease-in-out infinite alternate;
             transform: translate(-50%, -50%);
-            text-shadow: 0 0 6px rgba(180, 50, 255, 0.8); 
+            text-shadow: 0 0 8px rgba(180, 50, 255, 0.7); 
         }
         
         @keyframes fadeIn {
@@ -44,7 +43,7 @@
         
         @keyframes float {
             0% { margin-top: 0px; }
-            100% { margin-top: -5px; }
+            100% { margin-top: -6px; }
         }
     </style>
 </head>
@@ -75,24 +74,15 @@
             
             isMobile = window.innerWidth <= 768;
             
-            // حسبة دقيقة لحجم الخط عشان ما ينقص في الجوال ولا يطلع بره الشاشة
-            let fontSize;
-            if (isMobile) {
-                fontSize = window.innerWidth * 0.45; // مناسب لعرض الجوال
-            } else {
-                fontSize = Math.min(window.innerWidth * 0.35, window.innerHeight * 0.55);
-            }
-
+            // تصغير الخط في شاشات الجوال ليتناسب مع العرض دون اقتطاع
+            let fontSize = isMobile ? window.innerWidth * 0.35 : Math.min(window.innerWidth * 0.35, window.innerHeight * 0.55);
             ctx.font = `900 ${fontSize}px 'Cairo', 'Arial Black', sans-serif`;
 
-            // رفع الاسم شوي بالجوال عشان يتوسط صح
-            let offsetY = isMobile ? (canvas.height / 2) - (fontSize * 0.1) : canvas.height / 2;
-            ctx.fillText("نوف", canvas.width / 2, offsetY);
+            ctx.fillText("نوف", canvas.width / 2, canvas.height / 2);
 
             const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
 
-            // تقليل الخطوة بالجوال عشان يعطي تفاصيل أكثر للاسم وتوضح النقاط
-            let step = isMobile ? 4 : 5;
+            let step = isMobile ? 6 : 5;
 
             for (let y = 0; y < canvas.height; y += step) {
                 for (let x = 0; x < canvas.width; x += step) {
@@ -107,9 +97,8 @@
         function drawName() {
             if (points.length === 0) return;
 
-            // عدد الكلمات المناسب لسرعة الجوال وشكل الاسم
-            let maxWords = isMobile ? 1000 : 2000;
-            let wordsPerTick = isMobile ? 2 : 4;
+            let maxWords = isMobile ? 1200 : 2200;
+            let wordsPerTick = isMobile ? 3 : 4;
 
             for(let i = 0; i < wordsPerTick; i++) {
                 if(container.childNodes.length >= maxWords) return; 
@@ -117,16 +106,14 @@
                 const randIndex = Math.floor(Math.random() * points.length);
                 const point = points[randIndex];
 
-                // مساحة التناثر أصغر في الجوال عشان ما تتشوه الحروف
-                const jitterX = (Math.random() - 0.5) * (isMobile ? 6 : 10);
-                const jitterY = (Math.random() - 0.5) * (isMobile ? 6 : 10);
+                const jitterX = (Math.random() - 0.5) * (isMobile ? 6 : 12);
+                const jitterY = (Math.random() - 0.5) * (isMobile ? 6 : 12);
 
                 const word = document.createElement('span');
                 word.className = 'love-word';
                 word.innerText = phrases[Math.floor(Math.random() * phrases.length)];
 
-                // تصغير الخط بالجوال عشان تبان ملامح الاسم 
-                const fontSize = Math.random() * (isMobile ? 6 : 10) + (isMobile ? 4 : 6); 
+                const fontSize = Math.random() * (isMobile ? 6 : 10) + (isMobile ? 5 : 6); 
                 word.style.fontSize = `${fontSize}px`;
 
                 const hue = Math.floor(Math.random() * 30) + 260;
@@ -147,12 +134,9 @@
             }
         }
 
-        // تأخير بسيط عشان نضمن تحميل الخط بالجوال 100%
         document.fonts.ready.then(() => {
-            setTimeout(() => {
-                setupPoints();
-                drawName();
-            }, 200);
+            setupPoints();
+            drawName();
         });
 
         window.addEventListener('resize', () => {
